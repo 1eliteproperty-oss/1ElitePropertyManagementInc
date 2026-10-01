@@ -1,0 +1,42 @@
+name: Switch website to Google Photos
+
+on:
+  push:
+    paths:
+      - '.github/workflows/switch-to-google-photos.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace Google Drive website links with Google Photos
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          photos = 'https://photos.app.goo.gl/YAMSF1XnktrErGuN8'
+          drive = 'https://drive.google.com/drive/folders/1aOGWM36opMLzBnFvK4X7p3W_p-e8BBtB'
+          s = s.replace(drive, photos)
+          s = s.replace('Google Drive', 'Google Photos')
+          s = s.replace('>Owner Photos<', '>Google Photos<')
+          s = s.replace('<h3>Owner Upload</h3>', '<h3>Google Photos — Work Gallery</h3>')
+          s = s.replace('Open your website-approved Google Photos folder from your phone and add photos you want used on the site.', 'Open the Elite Property Management Google Photos album from your phone to view and manage the work photos used for the website.')
+          s = s.replace('>+ Add Project Photos<', '>Open Google Photos<')
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit website update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'No changes needed.'
+          else
+            git commit -m 'Use Google Photos for website photo management'
+            git push
+          fi
